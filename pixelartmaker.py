@@ -5,10 +5,6 @@ import tkinter as tk
 from tkinter.ttk import Style, Button
 from tkinter import filedialog
 from PIL import Image, ImageTk, ImageOps
-from watchdog.events import FileSystemEventHandler
-from watchdog.observers import Observer
-import queue
-import sys
 
 
 ############## <summary> ###############
@@ -71,16 +67,16 @@ class Application(tk.Frame):
     ######################################### <ウィジェット作成>
     def create_widgets(self):
         ############### ボタン
-        btntst = tk.Button(self.master, text="参照",command = self.btnclick_ref) #command = ???
-        btntst.place(x=1160, y=98)
+        btnref = tk.Button(self.master, text="参照",command = self.btnclick_ref) #command = ???
+        btnref.place(x=1160, y=98)
 
-        btnpre = tk.Button(self.master, text="プレビュー",width = "40",command = self.btn_preview)
-        btnpre.place(x=900, y=250)
+        btnpre = tk.Button(self.master, text="プレビュー",width = "46",command = self.btn_preview)
+        btnpre.place(x=860, y=270, width=330, height = 50)
 
-        btnch = tk.Button(self.master, text="変換",width="40") #state="disable"
-        btnch.place(x=900, y=400)
+        btnsave = tk.Button(self.master, text="保存", command = self.btn_savefile) #state="disable"
+        btnsave.place(x=860, y=700, width=330, height = 50)
 
-        btnsave = tk.Button(self.master, text="保存",state = "disable",width = "40")
+        #btnsave = tk.Button(self.master, text="保存",state = "disable",width = "40")
 
         ############### ラベル,表示テキスト
         lbl_filename = tk.Label(text="ファイル名")
@@ -91,16 +87,20 @@ class Application(tk.Frame):
         lbl_K.place(x=870, y=200)
 
         ############### テキストボックス,入力テキスト
-        self.txt_filename = tk.Entry(width=30)
-        self.txt_filename.place(x=970, y=100)
+        self.txt_filename = tk.Entry()
+        self.txt_filename.place(x=934, y=100, width= 220, height = 23)
 
-        self.txt_dotnum = tk.Entry(width=30)
+        self.txt_dotnum = tk.Entry()
         self.txt_dotnum.insert(tk.END,"16") #初期値
-        self.txt_dotnum.place(x=970, y=150)
+        self.txt_dotnum.place(x=990, y=150, width= 163, height = 23)
 
-        self.txt_K = tk.Entry(width=30)
+        self.txt_K = tk.Entry()
         self.txt_K.insert(tk.END,"8") #初期値
-        self.txt_K.place(x=970, y=200)
+        self.txt_K.place(x=990, y=200, width= 163, height = 23)
+
+        self.txt_savefilename = tk.Entry()
+        self.txt_savefilename.insert(tk.END,"8") #初期値
+        self.txt_savefilename.place(x=990, y=200, width= 163, height = 23)
 
     ######################################### </ウィジェット作成>
 
@@ -110,7 +110,7 @@ class Application(tk.Frame):
 ########################################################################################################################## <機能系>
     def menu_file_open_click(self, event=None):
         idir = "./" #自分自身のディレクトリ
-        filetype = [("png","*.png"), ("jpg","*.jpg"), ("すべて","*")] #ファイルフィルタ ("Image file", ".bmp .png .jpg .tif"), ("Bitmap", ".bmp"), ("PNG", ".png"), ("JPEG", ".jpg"), ("Tiff", ".tif")
+        filetype = [("すべて","*"), ("png","*.png"), ("jpg","*.jpg")] #ファイルフィルタ ("Image file", ".bmp .png .jpg .tif"), ("Bitmap", ".bmp"), ("PNG", ".png"), ("JPEG", ".jpg"), ("Tiff", ".tif")
         file_path = tk.filedialog.askopenfilename(filetypes = filetype, initialdir = idir)
         if(file_path != ""):
             self.txt_filename.delete(0,tk.END)
@@ -147,7 +147,7 @@ class Application(tk.Frame):
 
     def btnclick_ref(self): #参照ボタン
         idir = "./" #自分自身のディレクトリ
-        filetype = [("png","*.png"), ("jpg","*.jpg"), ("すべて","*")] #ファイルタイプ,追加可能
+        filetype = [("すべて","*"), ("png","*.png"), ("jpg","*.jpg")] #ファイルタイプ,追加可能
         file_path = tk.filedialog.askopenfilename(filetypes = filetype, initialdir = idir)
         if(file_path != ""):
             self.txt_filename.delete(0,tk.END)
@@ -156,7 +156,6 @@ class Application(tk.Frame):
 
     def btn_preview(self):
         self.canvas.delete("img")
-        strText = [self.txt_filename.get(),self.txt_dotnum.get(),self.txt_K.get()]
     
         if(self.txt_filename.get() != "" and self.txt_dotnum.get() != "" and self.txt_K.get() != ""):
             dotnum = int(self.txt_dotnum.get())
@@ -185,11 +184,54 @@ class Application(tk.Frame):
                 self.txt_filename.config(bg="red")
             else:
                 self.txt_filename.config(bg="white")
-            if(self.txt_dotnum.get() == ""):
+            if(self.txt_dotnum.get() == "" or int(self.txt_dotnum.get()) <= 0):
                 self.txt_dotnum.config(bg="red")
             else:
                 self.txt_dotnum.config(bg="white")
-            if(self.txt_K.get() == ""):
+            if(self.txt_K.get() == "" or int(self.txt_dotnum.get()) <= 0):
+                self.txt_K.config(bg="red")
+            else:
+                self.txt_K.config(bg="white")
+
+    def btn_savefile(self):
+        idir = "./" #自分自身のディレクトリ
+        filetype = [("png","*.png"), ("jpg","*.jpg"), ("すべて","*")] #ファイルタイプ,追加可能
+        fname = filedialog.asksaveasfilename(filetypes = filetype, initialdir = idir)
+
+        if(self.txt_filename.get() != "" and self.txt_dotnum.get() != "" and self.txt_K.get() != ""):
+            dotnum = int(self.txt_dotnum.get())
+            K = int(self.txt_K.get())
+            if(dotnum > 0 and K > 0 and fname != ""): #isinstance(dotnum,int) and isinstance(K,int)
+                print(fname)
+                # 入力画像を取得
+                img = cv2.imread(self.txt_filename.get())
+                h,w,c = img.shape
+                
+                if(h<w): #短辺の判断
+                    num1 = dotnum / float(h)
+                elif(h>=w):
+                    num1 = dotnum / float(w)
+
+                num2 = int(self.txt_K.get())
+                # ドット絵化
+                dst = self.pixel_art(img, num1, num2) #アルファ値：モザイクの大きさ　K値：色の数
+
+                # 結果を出力
+                cv2.imwrite(fname+".png", dst)
+                # 16進数へ変換してテキストボックスへセット
+
+                self.disp_image(fname+".png")
+
+        else: #もっと書き方あるだろー！！！！！
+            if(self.txt_filename.get() == ""):
+                self.txt_filename.config(bg="red")
+            else:
+                self.txt_filename.config(bg="white")
+            if(self.txt_dotnum.get() == "" or int(self.txt_dotnum.get()) <= 0):
+                self.txt_dotnum.config(bg="red")
+            else:
+                self.txt_dotnum.config(bg="white")
+            if(self.txt_K.get() == "" or int(self.txt_dotnum.get()) <= 0):
                 self.txt_K.config(bg="red")
             else:
                 self.txt_K.config(bg="white")
